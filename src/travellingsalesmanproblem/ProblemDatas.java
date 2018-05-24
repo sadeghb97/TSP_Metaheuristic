@@ -16,13 +16,16 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 public class ProblemDatas {
+    public static String CITIES_JSON = "travellingsalesmanproblem/tinycities.json";
+    public static String DISTANCES_JSON = "travellingsalesmanproblem/tinydistances.json";
+    
     public static String[] getCitiesArray(){
         ArrayList<String> citiesList = new ArrayList();
         FileReader reader;
         
         try {
             ClassLoader classLoader = TravellingSalesmanProblem.class.getClassLoader();
-            InputStream inputStream = classLoader.getResourceAsStream("travellingsalesmanproblem/cities.json");
+            InputStream inputStream = classLoader.getResourceAsStream(CITIES_JSON);
             String jsonString = readFromInputStream(inputStream);
             JSONArray jsonArray = new JSONArray(jsonString);
             
@@ -48,7 +51,7 @@ public class ProblemDatas {
         
         try {
             ClassLoader classLoader = TravellingSalesmanProblem.class.getClassLoader();
-            InputStream inputStream = classLoader.getResourceAsStream("travellingsalesmanproblem/distances.json");
+            InputStream inputStream = classLoader.getResourceAsStream(DISTANCES_JSON);
             String jsonString = readFromInputStream(inputStream);
             JSONArray jsonArray = new JSONArray(jsonString);
             

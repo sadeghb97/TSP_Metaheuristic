@@ -1,6 +1,8 @@
 package travellingsalesmanproblem;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 import java.util.Random;
 import sun.security.util.Length;
 
@@ -179,6 +181,11 @@ public class TSPSolutions {
         System.out.println("Shortest Path: " + resultPath);
         for(int i=0; answer.length>i; i++){
             if(i!=0) System.out.print("-");
+            System.out.print(String.valueOf(answer[i]));
+        }  
+        System.out.println();
+        for(int i=0; answer.length>i; i++){
+            if(i!=0) System.out.print("-");
             System.out.print(cities[answer[i]]);
         }
         System.out.println("-" + cities[answer[0]]);        
@@ -279,6 +286,7 @@ public class TSPSolutions {
             
             T*=coolingRate;
         }
+        
         printAnswer(answer, cities, distances);
         printAnswer(bestAnswer, cities, distances);
     }
@@ -286,5 +294,370 @@ public class TSPSolutions {
     private static void printLimitedNumber(int number){
         if(number >= (Integer.MAX_VALUE/5)) System.out.print("\u221E");
         else System.out.print(number);
+    }
+    
+    private static String roundDouble(double fNum, int decimals){
+        int coef = (int) Math.pow(10, decimals);
+        return String.valueOf((double)((int)(fNum*coef))/coef);
+    }
+    
+    public static void geneticSolve(String[] cities, int[][] distances){
+        final int MAX_GENERATIONS=5000;
+        GeneticTSPSolver geneticSolver = new GeneticTSPSolver(cities, distances, 20, 0.1);
+        geneticSolver.equalityCoefficient = 1.001;
+        geneticSolver.init();
+        for(int i=0; MAX_GENERATIONS>i; i++){
+            geneticSolver.nextGeneration();
+            //System.out.println(String.valueOf(geneticSolver.bestGen.distance));
+        }
+        GeneticTSPSolver.Gen bestGen = geneticSolver.bestGen;
+        
+        printAnswer(bestGen.fullPath, cities, distances);
+    }
+    
+    private static class GeneticTSPSolver{
+        String[] cities;
+        int[][] distances;
+        int population;
+        double mutationProb;
+        double equalityCoefficient;
+        Gen[] gens;
+        Gen bestGen;
+        Gen worstGen;
+        int generationsNum;
+        Random random;
+
+        public GeneticTSPSolver(String[] cities, int[][] distances, int population, double mutationProb) {
+            if((population%2)!=0) population++;
+            this.cities = cities;
+            this.distances = distances;
+            this.population = population;
+            this.mutationProb = mutationProb;
+            equalityCoefficient = 1.1;
+            random = new Random();
+        }
+        
+        public void init(){
+            gens = new Gen[population];
+            for(int i=0; gens.length>i; i++){
+                gens[i] = new Gen();
+                gens[i].fullPath = generateRandomAnswer(cities.length);
+            }
+            generationsNum=0;
+            calculateDistances();
+        }
+        
+        private void calculateDistances(){
+            for(int i=0; gens.length>i; i++){
+                gens[i].distance = answerEvaluator(gens[i].fullPath, distances);
+                if(bestGen==null || worstGen==null){
+                    bestGen = gens[i];
+                    worstGen = gens[i];
+                }
+                else{
+                    if(worstGen.distance<gens[i].distance) worstGen=gens[i];
+                    if(bestGen.distance>gens[i].distance) bestGen=gens[i];
+                }
+            }
+        }
+        
+        private Gen select(Gen pair){
+            while(true){
+                double sumProb=0;
+                double randomProb = Math.random();
+                
+                for(int i=0; gens.length>i; i++){
+                    sumProb+=gens[i].probablity;
+                    if(randomProb<=sumProb){
+                        if(pair == gens[i]){
+                            System.out.println("CH: " + i + " (" + roundDouble(randomProb, 4) + ") - Failed");
+                            break;
+                        }
+                        System.out.println("CH: " + i + " (" + roundDouble(randomProb, 4) + ")");
+                        return gens[i];
+                    }
+                }
+            }
+        }
+        
+        private Gen select(){
+            return select(null);
+        }
+        
+        private void readyForRouletteWheelSelection(){
+            int maxWorth = (int)(worstGen.distance * equalityCoefficient);
+            int sumWorthes=0;
+            for(int i=0; gens.length>i; i++){
+                gens[i].worth = maxWorth - gens[i].distance;
+                sumWorthes+=(gens[i].worth);
+            }
+            
+            double worthUnitProb = ((double)1)/sumWorthes;
+            for(int i=0; gens.length>i; i++)
+                gens[i].probablity = gens[i].worth*worthUnitProb;           
+        }
+        
+        private void readyForRankSelection(){
+            int sumWorthes=0;
+            PriorityQueue<Gen> queue = 
+                new PriorityQueue<Gen>(new DistanceComparator());
+            for(int i=0; gens.length>i; i++) queue.add(gens[i]);
+            for(int i=0; !queue.isEmpty(); i++){
+                queue.poll().worth = i;
+                sumWorthes+=i;
+            }
+            
+            double worthUnitProb = ((double)1)/sumWorthes;
+            for(int i=0; gens.length>i; i++)
+                gens[i].probablity = gens[i].worth*worthUnitProb;
+        }
+        
+        private void readyForSelection(){
+            readyForRankSelection();
+            
+            System.out.println("Generations: " + generationsNum);
+            for(int i=0; population>i; i++){
+                System.out.print(i+": ");
+                for(int j=0; cities.length>j; j++){
+                    if(j!=0) System.out.print("-");
+                    System.out.print(String.valueOf(gens[i].fullPath[j]));
+                }
+                
+                System.out.print(" | D: " + gens[i].distance);
+                System.out.print(" | W: " + gens[i].worth);
+                System.out.println(" | P: " + roundDouble(gens[i].probablity, 3));
+            }
+            System.out.println("-----------------\n");
+        }
+        
+        private Gen[] pmxCrossover(Gen parentOne, Gen parentTwo){
+            Gen[] childs = new Gen[2];
+            for(int i=0; 2>i; i++){
+                childs[i] = new Gen();
+                childs[i].fullPath = new int[cities.length];
+            }
+            for(int k=0; cities.length>k; k++){
+                childs[0].fullPath[k] = parentOne.fullPath[k];
+                childs[1].fullPath[k] = parentTwo.fullPath[k];
+            }
+            
+            int pmxNumber = cities.length/2;
+            
+            for(int i=0; pmxNumber>i; i++){
+                int randIndex = random.nextInt(cities.length);
+                
+                int childsOneNumber = childs[0].fullPath[randIndex];
+                int childsTwoNumber = childs[1].fullPath[randIndex];
+                int coFirstIndex=-1, coSecondIndex=-1, ctFirstIndex=-1, ctSecondIndex=-1;
+                
+                for(int k=0; cities.length>k; k++){
+                    if(childs[0].fullPath[k] == childsOneNumber) coFirstIndex=k;
+                    if(childs[0].fullPath[k] == childsTwoNumber) coSecondIndex=k;
+                    if(childs[1].fullPath[k] == childsOneNumber) ctFirstIndex=k;
+                    if(childs[1].fullPath[k] == childsTwoNumber) ctSecondIndex=k;
+                }
+                
+                int temp = childs[0].fullPath[coFirstIndex];
+                childs[0].fullPath[coFirstIndex] = childs[0].fullPath[coSecondIndex];
+                childs[0].fullPath[coSecondIndex] = temp;
+                
+                temp = childs[1].fullPath[ctFirstIndex];
+                childs[1].fullPath[ctFirstIndex] = childs[1].fullPath[ctSecondIndex];
+                childs[1].fullPath[ctSecondIndex] = temp;
+            }
+            
+            return childs;
+        }
+        
+        private boolean containsCity (int[] path, int city, int length){
+            for(int i=0; length>i; i++)
+                if(path[i]==city) return true;
+            return false;
+        }
+        
+        public Gen civilCrossover(Gen parentOne, Gen parentTwo){
+            Gen child = new Gen();
+            child.fullPath = new int[cities.length];
+
+            int firstHead = 0;
+            int secondHead = 0;
+
+            for(int j=0; cities.length>j; j++){
+                if(Math.random()>0.5){
+                    while(containsCity(child.fullPath, parentOne.fullPath[firstHead], j))
+                        firstHead++;
+                    child.fullPath[j] = parentOne.fullPath[firstHead];
+                }
+                else{
+                    while(containsCity(child.fullPath, parentTwo.fullPath[secondHead], j))
+                        secondHead++;
+                    child.fullPath[j] = parentTwo.fullPath[secondHead];                        
+                }
+            }
+            
+            return child;
+        }
+        
+        private static void ecRemoveCityFromNeighbours(ArrayList[] neighbours, int city){
+            for(int i=0; neighbours.length>i; i++)
+                neighbours[i].remove((Object) city);
+        }
+        
+        public Gen edgeCrossover(Gen parentOne, Gen parentTwo){
+            Gen child = new Gen();
+            child.fullPath = new int[cities.length];
+            ArrayList[] neighbours = new ArrayList[cities.length];
+            for(int j=0; cities.length>j; j++) neighbours[j] = new ArrayList();
+            
+            for(int j=0; cities.length>j; j++){
+                int poLeft, poRight, ptLeft, ptRight;
+                if(j==0){
+                    poLeft = parentOne.fullPath[parentOne.fullPath.length-1];
+                    poRight = parentOne.fullPath[j+1];
+                    ptLeft = parentTwo.fullPath[parentTwo.fullPath.length-1];
+                    ptRight = parentTwo.fullPath[j+1];
+                }
+                else if(j==(cities.length-1)){
+                    poLeft = parentOne.fullPath[j-1];
+                    poRight = parentOne.fullPath[0];
+                    ptLeft = parentTwo.fullPath[j-1];
+                    ptRight = parentTwo.fullPath[0];
+                }
+                else{
+                    poLeft = parentOne.fullPath[j-1];
+                    poRight = parentOne.fullPath[j+1];
+                    ptLeft = parentTwo.fullPath[j-1];
+                    ptRight = parentTwo.fullPath[j+1];                    
+                }
+                
+                if(!neighbours[parentOne.fullPath[j]].contains(poLeft))
+                    neighbours[parentOne.fullPath[j]].add(poLeft);
+                
+                if(!neighbours[parentOne.fullPath[j]].contains(poRight))
+                    neighbours[parentOne.fullPath[j]].add(poRight);
+                
+                if(!neighbours[parentTwo.fullPath[j]].contains(ptLeft))
+                    neighbours[parentTwo.fullPath[j]].add(ptLeft);
+                
+                if(!neighbours[parentTwo.fullPath[j]].contains(ptRight))
+                    neighbours[parentTwo.fullPath[j]].add(ptRight);
+            }
+
+            int city;
+            if(Math.random()>0.5) city = parentOne.fullPath[0];
+            else city = parentTwo.fullPath[0];
+            ArrayList notInChild = new ArrayList();
+            for(int i=0; cities.length>i; i++) notInChild.add(i);
+            
+            for(int j=0; cities.length>j; j++){
+                child.fullPath[j] = city;
+                ecRemoveCityFromNeighbours(neighbours, city);
+                //System.out.println("B:" + String.valueOf(notInChild.size()));
+                notInChild.remove((Object) city);
+                //System.out.println("A:" + String.valueOf(notInChild.size()));
+                
+                if(j == (cities.length-1)) break;
+                
+                int altCity;
+                if(neighbours[city].isEmpty()){
+                    altCity = (int) notInChild.get(random.nextInt(notInChild.size()));
+                }
+                else{
+                    ArrayList candidates = new ArrayList();
+                    int fewestLength=-1;
+                    
+                    for(int i=0; neighbours[city].size()>i; i++){
+                        int neighbourCity = (int) neighbours[city].get(i);
+                        if(i==0 || fewestLength > neighbours[neighbourCity].size()){
+                            fewestLength = neighbours[neighbourCity].size();
+                            candidates.clear();
+                            candidates.add(neighbourCity);
+                        }
+                        else if(fewestLength == neighbours[neighbourCity].size()){
+                            fewestLength = neighbours[neighbourCity].size();
+                            candidates.add(neighbourCity);
+                        }
+                    }
+                    
+                    altCity = (int) candidates.get(random.nextInt(candidates.size()));
+                }
+                
+                city = altCity;
+            }
+            
+            return child;
+        }
+        
+        public Gen crossover(Gen parentOne, Gen parentTwo){
+            return edgeCrossover(parentOne, parentTwo);
+        }
+        
+        public void mutation(){
+            for(int i=0; gens.length>i; i++){
+                if(Math.random()>mutationProb) continue;
+                
+                int first = random.nextInt(gens[i].fullPath.length);
+                int second = random.nextInt(gens[i].fullPath.length);
+                int temp = gens[i].fullPath[first];
+                gens[i].fullPath[first] = gens[i].fullPath[second];
+                gens[i].fullPath[second] = temp;
+            }            
+        }
+        
+        public void nextGeneration(){
+            readyForSelection();
+            Gen[] newGens = new Gen[population];
+            
+            for(int i=0; newGens.length>i; i++){
+                Gen father = select();
+                Gen mother = GeneticTSPSolver.this.select(father);
+                Gen child = crossover(father, mother);
+                newGens[i] = child;
+                
+                System.out.print("\nFather: ");
+                father.printPathWithIds();
+                System.out.println();
+                
+                System.out.print("Mother: ");
+                mother.printPathWithIds();
+                System.out.println();
+                
+                System.out.print("Child: ");
+                child.printPathWithIds();
+                System.out.println("\n");
+            }
+            
+            System.out.println("*****************\n\n");
+            
+            gens=newGens;
+            mutation();
+            generationsNum++;
+            calculateDistances();
+        }
+        
+        public static class DistanceComparator implements Comparator<Gen>{
+            @Override
+            public int compare(Gen x, Gen y){
+                if (x.distance < y.distance)
+                    return 1;
+                if (x.distance > y.distance)
+                    return -1;
+                return 0;
+            }
+        }
+        
+        private class Gen{
+            public int[] fullPath;
+            public int distance;
+            public int worth;
+            public double probablity;
+            
+            public void printPathWithIds(){
+                for(int i=0; fullPath.length>i; i++){
+                    if(i!=0) System.out.print("-");
+                    System.out.print(String.valueOf(fullPath[i]));
+                }                
+            }
+        }
     }
 }
