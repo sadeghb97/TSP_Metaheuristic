@@ -64,13 +64,17 @@ public class TSPSolutions {
         }
     }
     
-    private static void dynSolvePrintDelimiter(){
+    private static void printDelimiter(String delStr){
         System.out.print(" ");
-        StylishPrinter.print("//", StylishPrinter.ANSI_BOLD_YELLOW, StylishPrinter.ANSI_CYAN_BACKGROUND);
+        StylishPrinter.print(delStr, StylishPrinter.ANSI_BOLD_YELLOW, StylishPrinter.ANSI_CYAN_BACKGROUND);
         System.out.print(" ");        
     }
     
-    public static void dynamicSolve(String[] cities, int[][] distances){
+    private static void printDelimiter(){
+        printDelimiter("//");
+    }
+    
+    public static void solveWithDynamicSolve(String[] cities, int[][] distances){
         ArrayList<COpt> sets = new ArrayList();
         ArrayList<COpt> memory = new ArrayList();
         sets.add(new COpt(new int[]{0}));
@@ -125,7 +129,7 @@ public class TSPSolutions {
                 }
                 System.out.print("]");
                 
-                dynSolvePrintDelimiter();
+                printDelimiter();
                 
                 System.out.print("O:[");
                 for(int j=0; newMemory.get(i).orderedSet.length>j; j++){
@@ -134,17 +138,17 @@ public class TSPSolutions {
                 }
                 System.out.print("]");
                 
-                dynSolvePrintDelimiter();
+                printDelimiter();
                 
                 System.out.print("D:" + newMemory.get(i).destIndex);
                 
-                dynSolvePrintDelimiter();
+                printDelimiter();
                 
                 System.out.print("R:");
                 printLimitedNumber(newMemory.get(i).result);
                 System.out.println();
             }
-            System.out.println(newSets.size()+"-"+newMemory.size()+"\n");
+            System.out.println("("+newSets.size()+"-"+newMemory.size()+")\n");
         }
         
         COpt resultC = null;
@@ -200,7 +204,7 @@ public class TSPSolutions {
         return out;
     }
     
-    public static void hillClimbingSolve(String[] cities, int[][] distances){
+    public static void solveWithHillClimbing(String[] cities, int[][] distances){
         int[] answer = generateRandomAnswer(cities.length);
         
         int bestI, bestJ;
@@ -238,9 +242,9 @@ public class TSPSolutions {
         printAnswer(answer, cities, distances);
     }
     
-    public static void simulatedAnnealingSolve(String[] cities, int[][] distances){
-        final int maxIteration = 25000;
-        double coolingRate = 0.9996;
+    public static void solveWithSimulatedAnnealing(String[] cities, int[][] distances, 
+            int maxIteration, double coolingRate){
+        
         Random rand = new Random();
         
         int[] answer = generateRandomAnswer(cities.length);
@@ -251,9 +255,10 @@ public class TSPSolutions {
         double T=startTemperature;
         int bestDistance = (int) startTemperature;
         
-        for(int algRep=0; maxIteration>algRep; algRep++){
+        int algRep;
+        for(algRep=0; maxIteration>algRep; algRep++){
             int recentDistance = answerEvaluator(answer, distances);
-            if(algRep%500==0) System.out.println(String.valueOf(recentDistance));
+            if(algRep%500==0) System.out.println("Iteration " + algRep + ": " + recentDistance);
             int first = rand.nextInt(answer.length);
             int second = rand.nextInt(answer.length);
             int temp = answer[first];
@@ -287,7 +292,9 @@ public class TSPSolutions {
             T*=coolingRate;
         }
         
+        if(algRep>=500) System.out.println();
         printAnswer(answer, cities, distances);
+        System.out.println();
         printAnswer(bestAnswer, cities, distances);
     }
     
@@ -301,12 +308,16 @@ public class TSPSolutions {
         return String.valueOf((double)((int)(fNum*coef))/coef);
     }
     
-    public static void geneticSolve(String[] cities, int[][] distances){
-        final int MAX_GENERATIONS=5000;
-        GeneticTSPSolver geneticSolver = new GeneticTSPSolver(cities, distances, 20, 0.1);
+    public static void solveWithGenetic(String[] cities, int[][] distances, 
+            int maxGenerations, int populations, double mutationProb, 
+            int selectionMode, int crossoverMode){
+
+        GeneticTSPSolver geneticSolver = 
+                new GeneticTSPSolver(cities, distances, populations, mutationProb, selectionMode, crossoverMode);
+        
         geneticSolver.equalityCoefficient = 1.001;
         geneticSolver.init();
-        for(int i=0; MAX_GENERATIONS>i; i++){
+        for(int i=0; maxGenerations>i; i++){
             geneticSolver.nextGeneration();
             //System.out.println(String.valueOf(geneticSolver.bestGen.distance));
         }
@@ -315,7 +326,7 @@ public class TSPSolutions {
         printAnswer(bestGen.fullPath, cities, distances);
     }
     
-    private static class GeneticTSPSolver{
+    public static class GeneticTSPSolver{
         String[] cities;
         int[][] distances;
         int population;
@@ -326,13 +337,25 @@ public class TSPSolutions {
         Gen worstGen;
         int generationsNum;
         Random random;
+        int crossoverMode;
+        int selectionMode;
+        
+        final static int EDGE_CROSSOVER = 1;
+        final static int CIVIL_CROSSOVER = 2;
+        
+        final static int ROULETTE_WHEEL_SELECTION = 1;
+        final static int RANK_SELECTION = 2;
 
-        public GeneticTSPSolver(String[] cities, int[][] distances, int population, double mutationProb) {
+        public GeneticTSPSolver(String[] cities, int[][] distances, int population, 
+                double mutationProb, int selectionMode, int crossoverMode) {
+            
             if((population%2)!=0) population++;
             this.cities = cities;
             this.distances = distances;
             this.population = population;
             this.mutationProb = mutationProb;
+            this.crossoverMode = crossoverMode;
+            this.selectionMode = selectionMode;
             equalityCoefficient = 1.1;
             random = new Random();
         }
@@ -413,7 +436,8 @@ public class TSPSolutions {
         }
         
         private void readyForSelection(){
-            readyForRankSelection();
+            if(selectionMode == ROULETTE_WHEEL_SELECTION) readyForRouletteWheelSelection();
+            else readyForRankSelection();
             
             System.out.println("Generations: " + generationsNum);
             for(int i=0; population>i; i++){
@@ -423,9 +447,12 @@ public class TSPSolutions {
                     System.out.print(String.valueOf(gens[i].fullPath[j]));
                 }
                 
-                System.out.print(" | D: " + gens[i].distance);
-                System.out.print(" | W: " + gens[i].worth);
-                System.out.println(" | P: " + roundDouble(gens[i].probablity, 3));
+                printDelimiter("|");
+                System.out.print("D: " + gens[i].distance);
+                printDelimiter("|");
+                System.out.print("W: " + gens[i].worth);
+                printDelimiter("|");
+                System.out.println("P: " + roundDouble(gens[i].probablity, 3));
             }
             System.out.println("-----------------\n");
         }
@@ -589,13 +616,15 @@ public class TSPSolutions {
         }
         
         public Gen crossover(Gen parentOne, Gen parentTwo){
+            if(crossoverMode == CIVIL_CROSSOVER)
+                return civilCrossover(parentOne, parentTwo);
             return edgeCrossover(parentOne, parentTwo);
         }
         
         public void mutation(){
             for(int i=0; gens.length>i; i++){
                 if(Math.random()>mutationProb) continue;
-                
+
                 int first = random.nextInt(gens[i].fullPath.length);
                 int second = random.nextInt(gens[i].fullPath.length);
                 int temp = gens[i].fullPath[first];
@@ -646,7 +675,7 @@ public class TSPSolutions {
             }
         }
         
-        private class Gen{
+        public class Gen{
             public int[] fullPath;
             public int distance;
             public int worth;

@@ -23,5 +23,26 @@ public class SbproScanner {
             
             return result;
         }
-    }    
+    }
+    
+    public static double inputDouble(double min, double max){
+        Scanner scanner = new Scanner(System.in);
+        double result;
+        
+        while(true){
+            String input = scanner.next();
+            try{result = Double.valueOf(input);}
+            catch(NumberFormatException ex){
+                System.out.print("Wrong format! Try Again: ");
+                continue;
+            }
+            
+            if(result<min || result>max){
+                System.out.print("Wrong range! Try Again: ");
+                continue;
+            }
+            
+            return result;
+        }
+    } 
 }

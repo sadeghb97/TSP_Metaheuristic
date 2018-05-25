@@ -16,8 +16,33 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 public class ProblemDatas {
-    public static String CITIES_JSON = "travellingsalesmanproblem/tinycities.json";
-    public static String DISTANCES_JSON = "travellingsalesmanproblem/tinydistances.json";
+    public static final int TINY_CITIES_LIST = 1;
+    public static final int SMALL_CITIES_LIST = 2;
+    public static final int FULL_CITIES_LIST = 3;
+    
+    private static String CITIES_JSON = "travellingsalesmanproblem/small_cities.json";
+    private static String DISTANCES_JSON = "travellingsalesmanproblem/small_distances.json";
+    private static int listId = SMALL_CITIES_LIST;
+    
+    public static void changeCitiesList(int newListId){
+        if(newListId == TINY_CITIES_LIST){
+            listId = TINY_CITIES_LIST;
+            CITIES_JSON = "travellingsalesmanproblem/tiny_cities.json";
+            DISTANCES_JSON = "travellingsalesmanproblem/tiny_distances.json";            
+        }
+        else if(newListId == FULL_CITIES_LIST){
+            listId = FULL_CITIES_LIST;
+            CITIES_JSON = "travellingsalesmanproblem/full_cities.json";
+            DISTANCES_JSON = "travellingsalesmanproblem/full_distances.json";   
+        }
+        else{
+            listId = SMALL_CITIES_LIST;
+            CITIES_JSON = "travellingsalesmanproblem/small_cities.json";
+            DISTANCES_JSON = "travellingsalesmanproblem/small_distances.json";              
+        }
+    }
+    
+    public static int getListId(){ return listId;}
     
     public static String[] getCitiesArray(){
         ArrayList<String> citiesList = new ArrayList();
