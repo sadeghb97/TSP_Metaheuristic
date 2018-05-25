@@ -74,7 +74,7 @@ public class TSPSolutions {
         printDelimiter("//");
     }
     
-    public static void solveWithDynamicSolve(String[] cities, int[][] distances){
+    public static void solveWithDynamicSolve(String[] cities, int[][] distances, boolean printLogs){
         ArrayList<COpt> sets = new ArrayList();
         ArrayList<COpt> memory = new ArrayList();
         sets.add(new COpt(new int[]{0}));
@@ -121,34 +121,36 @@ public class TSPSolutions {
             memory = newMemory;
             sets = newSets;
             
-            for(int i=0; newMemory.size()>i; i++){
-                System.out.print("S:[");
-                for(int j=0; newMemory.get(i).set.length>j; j++){
-                    if(j!=0) System.out.print(",");
-                    System.out.print(newMemory.get(i).set[j]);
+            if(printLogs){
+                for(int i=0; newMemory.size()>i; i++){
+                    System.out.print("S:[");
+                    for(int j=0; newMemory.get(i).set.length>j; j++){
+                        if(j!=0) System.out.print(",");
+                        System.out.print(newMemory.get(i).set[j]);
+                    }
+                    System.out.print("]");
+
+                    printDelimiter();
+
+                    System.out.print("O:[");
+                    for(int j=0; newMemory.get(i).orderedSet.length>j; j++){
+                        if(j!=0) System.out.print(",");
+                        System.out.print(newMemory.get(i).orderedSet[j]);
+                    }
+                    System.out.print("]");
+
+                    printDelimiter();
+
+                    System.out.print("D:" + newMemory.get(i).destIndex);
+
+                    printDelimiter();
+
+                    System.out.print("R:");
+                    printLimitedNumber(newMemory.get(i).result);
+                    System.out.println();
                 }
-                System.out.print("]");
-                
-                printDelimiter();
-                
-                System.out.print("O:[");
-                for(int j=0; newMemory.get(i).orderedSet.length>j; j++){
-                    if(j!=0) System.out.print(",");
-                    System.out.print(newMemory.get(i).orderedSet[j]);
-                }
-                System.out.print("]");
-                
-                printDelimiter();
-                
-                System.out.print("D:" + newMemory.get(i).destIndex);
-                
-                printDelimiter();
-                
-                System.out.print("R:");
-                printLimitedNumber(newMemory.get(i).result);
-                System.out.println();
+                System.out.println("("+newSets.size()+"-"+newMemory.size()+")\n");
             }
-            System.out.println("("+newSets.size()+"-"+newMemory.size()+")\n");
         }
         
         COpt resultC = null;
@@ -303,19 +305,15 @@ public class TSPSolutions {
         else System.out.print(number);
     }
     
-    private static String roundDouble(double fNum, int decimals){
-        int coef = (int) Math.pow(10, decimals);
-        return String.valueOf((double)((int)(fNum*coef))/coef);
-    }
-    
     public static void solveWithGenetic(String[] cities, int[][] distances, 
             int maxGenerations, int populations, double mutationProb, 
-            int selectionMode, int crossoverMode){
+            int selectionMode, int crossoverMode, boolean printLogs){
 
         GeneticTSPSolver geneticSolver = 
                 new GeneticTSPSolver(cities, distances, populations, mutationProb, selectionMode, crossoverMode);
         
         geneticSolver.equalityCoefficient = 1.001;
+        geneticSolver.printLogs = printLogs;
         geneticSolver.init();
         for(int i=0; maxGenerations>i; i++){
             geneticSolver.nextGeneration();
@@ -324,6 +322,14 @@ public class TSPSolutions {
         GeneticTSPSolver.Gen bestGen = geneticSolver.bestGen;
         
         printAnswer(bestGen.fullPath, cities, distances);
+    }
+    
+    public static void solveWithGenetic(String[] cities, int[][] distances, 
+            int maxGenerations, int populations, double mutationProb, 
+            int selectionMode, int crossoverMode){
+        
+        solveWithGenetic(cities, distances, maxGenerations, populations,
+                mutationProb, selectionMode, crossoverMode, true);
     }
     
     public static class GeneticTSPSolver{
@@ -336,9 +342,10 @@ public class TSPSolutions {
         Gen bestGen;
         Gen worstGen;
         int generationsNum;
-        Random random;
         int crossoverMode;
         int selectionMode;
+        boolean printLogs;
+        Random random;
         
         final static int EDGE_CROSSOVER = 1;
         final static int CIVIL_CROSSOVER = 2;
@@ -357,6 +364,7 @@ public class TSPSolutions {
             this.crossoverMode = crossoverMode;
             this.selectionMode = selectionMode;
             equalityCoefficient = 1.1;
+            printLogs = true;
             random = new Random();
         }
         
@@ -393,10 +401,15 @@ public class TSPSolutions {
                     sumProb+=gens[i].probablity;
                     if(randomProb<=sumProb){
                         if(pair == gens[i]){
-                            System.out.println("CH: " + i + " (" + roundDouble(randomProb, 4) + ") - Failed");
+                            if(printLogs)
+                                System.out.println("CH: " + i + " (" + 
+                                        SbproPrinter.roundDouble(randomProb, 4) + ") - Failed");
                             break;
                         }
-                        System.out.println("CH: " + i + " (" + roundDouble(randomProb, 4) + ")");
+                        
+                        if(printLogs)
+                            System.out.println("CH: " + i + " (" +
+                                    SbproPrinter.roundDouble(randomProb, 4) + ")");
                         return gens[i];
                     }
                 }
@@ -439,20 +452,19 @@ public class TSPSolutions {
             if(selectionMode == ROULETTE_WHEEL_SELECTION) readyForRouletteWheelSelection();
             else readyForRankSelection();
             
+            if(!printLogs) return;
+                
             System.out.println("Generations: " + generationsNum);
             for(int i=0; population>i; i++){
                 System.out.print(i+": ");
-                for(int j=0; cities.length>j; j++){
-                    if(j!=0) System.out.print("-");
-                    System.out.print(String.valueOf(gens[i].fullPath[j]));
-                }
+                gens[i].printPathWithIds();
                 
                 printDelimiter("|");
                 System.out.print("D: " + gens[i].distance);
                 printDelimiter("|");
                 System.out.print("W: " + gens[i].worth);
                 printDelimiter("|");
-                System.out.println("P: " + roundDouble(gens[i].probablity, 3));
+                System.out.println("P: " + SbproPrinter.roundDouble(gens[i].probablity, 3));
             }
             System.out.println("-----------------\n");
         }
@@ -579,9 +591,7 @@ public class TSPSolutions {
             for(int j=0; cities.length>j; j++){
                 child.fullPath[j] = city;
                 ecRemoveCityFromNeighbours(neighbours, city);
-                //System.out.println("B:" + String.valueOf(notInChild.size()));
                 notInChild.remove((Object) city);
-                //System.out.println("A:" + String.valueOf(notInChild.size()));
                 
                 if(j == (cities.length-1)) break;
                 
@@ -643,20 +653,22 @@ public class TSPSolutions {
                 Gen child = crossover(father, mother);
                 newGens[i] = child;
                 
-                System.out.print("\nFather: ");
-                father.printPathWithIds();
-                System.out.println();
-                
-                System.out.print("Mother: ");
-                mother.printPathWithIds();
-                System.out.println();
-                
-                System.out.print("Child: ");
-                child.printPathWithIds();
-                System.out.println("\n");
+                if(printLogs){
+                    System.out.print("\nFather: ");
+                    father.printPathWithIds();
+                    System.out.println();
+
+                    System.out.print("Mother: ");
+                    mother.printPathWithIds();
+                    System.out.println();
+
+                    System.out.print("Child: ");
+                    child.printPathWithIds();
+                    System.out.println("\n");
+                }
             }
             
-            System.out.println("*****************\n\n");
+            if(printLogs) System.out.println("*****************\n\n");
             
             gens=newGens;
             mutation();

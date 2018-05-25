@@ -11,13 +11,22 @@ public class TravellingSalesmanProblem {
     }
     
     public static void dynamicSolve(){
+        boolean printLogs = wantLogs();
+        long startTime = System.nanoTime();
         StylishPrinter.println("\nDynamic Programming Solving:", StylishPrinter.ANSI_BOLD_RED);
-        TSPSolutions.solveWithDynamicSolve(cities, distances);
+        TSPSolutions.solveWithDynamicSolve(cities, distances, printLogs);
+        long endTime = System.nanoTime();
+        double secTime = (double)(endTime - startTime)/1000000000;
+        printRuntime(secTime);
     }
     
     public static void hillClimbingSolve(){
+        long startTime = System.nanoTime();
         StylishPrinter.println("\nHill Climbing Solving:", StylishPrinter.ANSI_BOLD_RED);
         TSPSolutions.solveWithHillClimbing(cities, distances);
+        long endTime = System.nanoTime();
+        double secTime = (double)(endTime - startTime)/1000000000;
+        printRuntime(secTime);
     }
     
     public static void simAnnealingSolve(){
@@ -63,7 +72,11 @@ public class TravellingSalesmanProblem {
         }
         System.out.println();
         
+        long startTime = System.nanoTime();
         TSPSolutions.solveWithSimulatedAnnealing(cities, distances, maxIterations, coolingRate);
+        long endTime = System.nanoTime();
+        double secTime = (double)(endTime - startTime)/1000000000;
+        printRuntime(secTime);
     }
     
     public static void geneticSolve(){
@@ -71,6 +84,7 @@ public class TravellingSalesmanProblem {
         int sugMaxGenerations, maxGenerations, sugPopulations, populations;
         double sugMutationProb, mutationProb;
         int crossoverMode, selectionMode;
+        boolean printLogs;
         
         if(cities.length<=5){
             sugMaxGenerations = 50;
@@ -138,11 +152,18 @@ public class TravellingSalesmanProblem {
         choose = SbproScanner.inputInt(1, 2);
         if(choose==1) crossoverMode = TSPSolutions.GeneticTSPSolver.EDGE_CROSSOVER;
         else crossoverMode = TSPSolutions.GeneticTSPSolver.CIVIL_CROSSOVER;
+        
+        printLogs = wantLogs();
 
         System.out.println();
         
+        long startTime = System.nanoTime();
         TSPSolutions.solveWithGenetic(cities, distances, maxGenerations, populations, 
-                mutationProb, selectionMode, crossoverMode);        
+                mutationProb, selectionMode, crossoverMode, printLogs);
+        
+        long endTime = System.nanoTime();
+        double secTime = (double)(endTime - startTime)/1000000000;
+        printRuntime(secTime);
     }
     
     public static void changeCitiesList(){
@@ -180,6 +201,27 @@ public class TravellingSalesmanProblem {
             }
             else break;
         }
+    }
+    
+    public static boolean wantLogs(){
+        boolean printLogs;
+        System.out.println("\nDo you want the logs to be printed?");
+        System.out.println("1: Yes");
+        System.out.println("2: No");
+        System.out.print("Your Choice: ");
+        int choose = SbproScanner.inputInt(1, 2);
+        if(choose==1) return true;
+        else return false;
+    }
+    
+    public static void printRuntime(double secTime){
+        int decimalsNum;
+        if(secTime<0.0001) decimalsNum=5;
+        else if(secTime<0.001) decimalsNum=4;
+        else decimalsNum=3;
+        
+        StylishPrinter.println("Runtime: " + SbproPrinter.roundDouble(secTime, decimalsNum),
+                StylishPrinter.ANSI_BOLD_YELLOW, StylishPrinter.ANSI_CYAN_BACKGROUND);
     }
     
     public static boolean menu(){
