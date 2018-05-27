@@ -5,8 +5,10 @@
         <group>
             <file>file:/home/sadegh/Documents/Programming/Java/TravellingSalesmanProblem/src/travellingsalesmanproblem/ProblemDatas.java</file>
             <file>file:/home/sadegh/Documents/Programming/Java/TravellingSalesmanProblem/src/travellingsalesmanproblem/SbproScanner.java</file>
+            <file>file:/home/sadegh/Documents/Programming/Java/TravellingSalesmanProblem/src/travellingsalesmanproblem/TSPRunnable.java</file>
             <file>file:/home/sadegh/Documents/Programming/Java/TravellingSalesmanProblem/src/travellingsalesmanproblem/TravellingSalesmanProblem.java</file>
             <file>file:/home/sadegh/Documents/Programming/Java/TravellingSalesmanProblem/src/travellingsalesmanproblem/TSPSolutions.java</file>
+            <file>file:/home/sadegh/Documents/Programming/Java/TravellingSalesmanProblem/src/travellingsalesmanproblem/SbproPrinter.java</file>
         </group>
     </open-files>
 </project-private>

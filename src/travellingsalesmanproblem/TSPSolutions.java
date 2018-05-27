@@ -64,17 +64,8 @@ public class TSPSolutions {
         }
     }
     
-    private static void printDelimiter(String delStr){
-        System.out.print(" ");
-        StylishPrinter.print(delStr, StylishPrinter.ANSI_BOLD_YELLOW, StylishPrinter.ANSI_CYAN_BACKGROUND);
-        System.out.print(" ");        
-    }
-    
-    private static void printDelimiter(){
-        printDelimiter("//");
-    }
-    
-    public static void solveWithDynamicSolve(String[] cities, int[][] distances, boolean printLogs){
+    public static int[] solveWithDynamicSolve(String[] cities, int[][] distances, boolean printLogs){
+        boolean normalMode = TravellingSalesmanProblem.isNormalMode();
         ArrayList<COpt> sets = new ArrayList();
         ArrayList<COpt> memory = new ArrayList();
         sets.add(new COpt(new int[]{0}));
@@ -121,7 +112,7 @@ public class TSPSolutions {
             memory = newMemory;
             sets = newSets;
             
-            if(printLogs){
+            if(printLogs && normalMode){
                 for(int i=0; newMemory.size()>i; i++){
                     System.out.print("S:[");
                     for(int j=0; newMemory.get(i).set.length>j; j++){
@@ -130,7 +121,7 @@ public class TSPSolutions {
                     }
                     System.out.print("]");
 
-                    printDelimiter();
+                    SbproPrinter.printDelimiter();
 
                     System.out.print("O:[");
                     for(int j=0; newMemory.get(i).orderedSet.length>j; j++){
@@ -139,11 +130,11 @@ public class TSPSolutions {
                     }
                     System.out.print("]");
 
-                    printDelimiter();
+                    SbproPrinter.printDelimiter();
 
                     System.out.print("D:" + newMemory.get(i).destIndex);
 
-                    printDelimiter();
+                    SbproPrinter.printDelimiter();
 
                     System.out.print("R:");
                     printLimitedNumber(newMemory.get(i).result);
@@ -160,12 +151,16 @@ public class TSPSolutions {
                 resultC=memory.get(i);
         }
         
-        System.out.println("Shortest Path: " + (resultC.result  + distances[resultC.destIndex][0]));
-        for(int i=0; resultC.orderedSet.length>i; i++){
-            if(i!=0) System.out.print("-");
-            System.out.print(cities[resultC.orderedSet[i]]);
+        if(normalMode){
+            System.out.println("Shortest Path: " + (resultC.result  + distances[resultC.destIndex][0]));
+            for(int i=0; resultC.orderedSet.length>i; i++){
+                if(i!=0) System.out.print("-");
+                System.out.print(cities[resultC.orderedSet[i]]);
+            }
+            System.out.println("-" + cities[0]);
         }
-        System.out.println("-" + cities[0]);
+        
+        return resultC.orderedSet;
     }
     
     private static int[] generateRandomAnswer(int length){
@@ -197,7 +192,7 @@ public class TSPSolutions {
         System.out.println("-" + cities[answer[0]]);        
     }
     
-    private static int answerEvaluator(int[] answer, int[][] distances){
+    public static int answerEvaluator(int[] answer, int[][] distances){
         int out=0;
         for(int i=0; answer.length>i; i++){
             if(answer.length>i+1) out+=(distances[answer[i]][answer[i+1]]);
@@ -206,7 +201,8 @@ public class TSPSolutions {
         return out;
     }
     
-    public static void solveWithHillClimbing(String[] cities, int[][] distances){
+    public static int[] solveWithHillClimbing(String[] cities, int[][] distances){
+        boolean normalMode = TravellingSalesmanProblem.isNormalMode();
         int[] answer = generateRandomAnswer(cities.length);
         
         int bestI, bestJ;
@@ -241,11 +237,14 @@ public class TSPSolutions {
             }
         } while(bestI!=-1 && bestJ!=-1);
         
-        printAnswer(answer, cities, distances);
+        if(normalMode) printAnswer(answer, cities, distances);
+        return answer;
     }
     
-    public static void solveWithSimulatedAnnealing(String[] cities, int[][] distances, 
+    public static int[] solveWithSimulatedAnnealing(String[] cities, int[][] distances, 
             int maxIteration, double coolingRate){
+        
+        boolean normalMode = TravellingSalesmanProblem.isNormalMode();
         
         Random rand = new Random();
         
@@ -260,7 +259,7 @@ public class TSPSolutions {
         int algRep;
         for(algRep=0; maxIteration>algRep; algRep++){
             int recentDistance = answerEvaluator(answer, distances);
-            if(algRep%500==0) System.out.println("Iteration " + algRep + ": " + recentDistance);
+            if(algRep%500==0 && normalMode) System.out.println("Iteration " + algRep + ": " + recentDistance);
             int first = rand.nextInt(answer.length);
             int second = rand.nextInt(answer.length);
             int temp = answer[first];
@@ -294,10 +293,13 @@ public class TSPSolutions {
             T*=coolingRate;
         }
         
-        if(algRep>=500) System.out.println();
-        printAnswer(answer, cities, distances);
-        System.out.println();
-        printAnswer(bestAnswer, cities, distances);
+        if(algRep>=500 && normalMode) System.out.println();
+        if(normalMode){
+            printAnswer(answer, cities, distances);
+            System.out.println();
+            printAnswer(bestAnswer, cities, distances);
+        }
+        return bestAnswer;
     }
     
     private static void printLimitedNumber(int number){
@@ -305,10 +307,11 @@ public class TSPSolutions {
         else System.out.print(number);
     }
     
-    public static void solveWithGenetic(String[] cities, int[][] distances, 
+    public static int[] solveWithGenetic(String[] cities, int[][] distances, 
             int maxGenerations, int populations, double mutationProb, 
             int selectionMode, int crossoverMode, boolean printLogs){
-
+        
+        boolean normalMode = TravellingSalesmanProblem.isNormalMode();
         GeneticTSPSolver geneticSolver = 
                 new GeneticTSPSolver(cities, distances, populations, mutationProb, selectionMode, crossoverMode);
         
@@ -321,7 +324,8 @@ public class TSPSolutions {
         }
         GeneticTSPSolver.Gen bestGen = geneticSolver.bestGen;
         
-        printAnswer(bestGen.fullPath, cities, distances);
+        if(normalMode) printAnswer(bestGen.fullPath, cities, distances);
+        return bestGen.fullPath;
     }
     
     public static void solveWithGenetic(String[] cities, int[][] distances, 
@@ -459,11 +463,11 @@ public class TSPSolutions {
                 System.out.print(i+": ");
                 gens[i].printPathWithIds();
                 
-                printDelimiter("|");
+                SbproPrinter.printDelimiter("|");
                 System.out.print("D: " + gens[i].distance);
-                printDelimiter("|");
+                SbproPrinter.printDelimiter("|");
                 System.out.print("W: " + gens[i].worth);
-                printDelimiter("|");
+                SbproPrinter.printDelimiter("|");
                 System.out.println("P: " + SbproPrinter.roundDouble(gens[i].probablity, 3));
             }
             System.out.println("-----------------\n");

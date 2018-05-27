@@ -4,29 +4,33 @@ public class TravellingSalesmanProblem {
     private static String[] cities;
     private static int[][] distances;
     
+    public static final int NORMAL_MODE = 1;
+    public static final int ANALYZE_MODE = 2;
+    private static int programMode = NORMAL_MODE;
+    
     public static void main(String[] args) {
         cities = ProblemDatas.getCitiesArray();
         distances = ProblemDatas.getDistancesArray();
         while(menu());
     }
     
+    public static int getProgramMode(){return programMode;}
+    
     public static void dynamicSolve(){
-        boolean printLogs = wantLogs();
-        long startTime = System.nanoTime();
         StylishPrinter.println("\nDynamic Programming Solving:", StylishPrinter.ANSI_BOLD_RED);
-        TSPSolutions.solveWithDynamicSolve(cities, distances, printLogs);
-        long endTime = System.nanoTime();
-        double secTime = (double)(endTime - startTime)/1000000000;
-        printRuntime(secTime);
+        boolean printLogs;
+        if(programMode == NORMAL_MODE) printLogs = wantLogs(false);
+        else printLogs = false;
+        
+        TSPRunnable tspRunnable = new TSPRunnable(TSPRunnable.DYNAMIC_PROGRAMMING, cities, distances);
+        tspRunnable.setPrintLogs(printLogs);
+        tspRunnable.run();
     }
     
     public static void hillClimbingSolve(){
-        long startTime = System.nanoTime();
         StylishPrinter.println("\nHill Climbing Solving:", StylishPrinter.ANSI_BOLD_RED);
-        TSPSolutions.solveWithHillClimbing(cities, distances);
-        long endTime = System.nanoTime();
-        double secTime = (double)(endTime - startTime)/1000000000;
-        printRuntime(secTime);
+        TSPRunnable tspRunnable = new TSPRunnable(TSPRunnable.HILL_CLIMBING, cities, distances);
+        tspRunnable.run();
     }
     
     public static void simAnnealingSolve(){
@@ -72,11 +76,10 @@ public class TravellingSalesmanProblem {
         }
         System.out.println();
         
-        long startTime = System.nanoTime();
-        TSPSolutions.solveWithSimulatedAnnealing(cities, distances, maxIterations, coolingRate);
-        long endTime = System.nanoTime();
-        double secTime = (double)(endTime - startTime)/1000000000;
-        printRuntime(secTime);
+        TSPRunnable tspRunnable = new TSPRunnable(TSPRunnable.SIMULATED_ANNEALING, cities, distances);
+        tspRunnable.setMaxIteration(maxIterations);
+        tspRunnable.setCoolingRate(coolingRate);
+        tspRunnable.run();
     }
     
     public static void geneticSolve(){
@@ -153,17 +156,18 @@ public class TravellingSalesmanProblem {
         if(choose==1) crossoverMode = TSPSolutions.GeneticTSPSolver.EDGE_CROSSOVER;
         else crossoverMode = TSPSolutions.GeneticTSPSolver.CIVIL_CROSSOVER;
         
-        printLogs = wantLogs();
-
         System.out.println();
+        if(programMode == NORMAL_MODE) printLogs = wantLogs(false);
+        else printLogs=false;
         
-        long startTime = System.nanoTime();
-        TSPSolutions.solveWithGenetic(cities, distances, maxGenerations, populations, 
-                mutationProb, selectionMode, crossoverMode, printLogs);
-        
-        long endTime = System.nanoTime();
-        double secTime = (double)(endTime - startTime)/1000000000;
-        printRuntime(secTime);
+        TSPRunnable tspRunnable = new TSPRunnable(TSPRunnable.GENETIC, cities, distances);
+        tspRunnable.setMaxGenerations(maxGenerations);
+        tspRunnable.setPopulations(populations);
+        tspRunnable.setMutationProb(mutationProb);
+        tspRunnable.setSelectionMode(selectionMode);
+        tspRunnable.setCrossoverMode(crossoverMode);
+        tspRunnable.setPrintLogs(printLogs);
+        tspRunnable.run();
     }
     
     public static void changeCitiesList(){
@@ -203,25 +207,60 @@ public class TravellingSalesmanProblem {
         }
     }
     
-    public static boolean wantLogs(){
+    public static boolean isNormalMode(){
+        return programMode==NORMAL_MODE;
+    }
+    
+    public static boolean wantLogs(boolean typeEnter){
         boolean printLogs;
-        System.out.println("\nDo you want the logs to be printed?");
+        if(typeEnter) System.out.println();
+        System.out.println("Do you want the logs to be printed?");
         System.out.println("1: Yes");
         System.out.println("2: No");
         System.out.print("Your Choice: ");
         int choose = SbproScanner.inputInt(1, 2);
+        System.out.println();
         if(choose==1) return true;
         else return false;
     }
     
-    public static void printRuntime(double secTime){
+    public static boolean wantLogs(){
+        return wantLogs(true);
+    }
+    
+    public static int howManyRunNumber(boolean typeEnter){
+        if(typeEnter) System.out.println();
+        System.out.println("How many times does the algorithm run?");
+        System.out.println("1: 100");
+        System.out.println("2: Enter Another Value");
+        System.out.print("Your Choice: ");
+        int choose = SbproScanner.inputInt(1, 2);
+        if(choose==1) return 100;
+        
+        System.out.println("\nEnter Desired Value: ");
+        System.out.println();
+        return SbproScanner.inputInt(1, 10000);
+    }
+    
+    public static int howManyRunNumber(){
+        return howManyRunNumber(true);
+    }
+    
+    public static String getSecRuntimeString(long runtime){
+        double secTime = (double)(runtime)/1000000000;
         int decimalsNum;
         if(secTime<0.0001) decimalsNum=5;
         else if(secTime<0.001) decimalsNum=4;
         else decimalsNum=3;
-        
-        StylishPrinter.println("Runtime: " + SbproPrinter.roundDouble(secTime, decimalsNum),
-                StylishPrinter.ANSI_BOLD_YELLOW, StylishPrinter.ANSI_CYAN_BACKGROUND);
+        return SbproPrinter.roundDouble(secTime, decimalsNum);
+    }
+    
+    public static void printRuntime(long runtime, String fgColor, String bgColor){
+        StylishPrinter.println("Runtime: " + getSecRuntimeString(runtime), fgColor, bgColor);
+    }
+    
+    public static void printRuntime(long runtime){
+        printRuntime(runtime, StylishPrinter.ANSI_BOLD_YELLOW, StylishPrinter.ANSI_CYAN_BACKGROUND);
     }
     
     public static boolean menu(){
@@ -231,16 +270,23 @@ public class TravellingSalesmanProblem {
         System.out.println("3: Simulated Annealing Solve");
         System.out.println("4: Genetic Solve");
         System.out.println("5: Change Cities List");
-        System.out.println("6: Exit");
+        if(programMode == NORMAL_MODE)
+            System.out.println("6: Analyse Mode");
+        else System.out.println("6: Normal Mode");
+        System.out.println("7: Exit");
         System.out.print("\nEnter Your Choice: ");
-        int choice = SbproScanner.inputInt(1, 6);
+        int choice = SbproScanner.inputInt(1, 7);
         
         if(choice==1) dynamicSolve();
         else if(choice==2) hillClimbingSolve();
         else if(choice==3) simAnnealingSolve();
         else if(choice==4) geneticSolve();
         else if(choice==5) changeCitiesList();
-        else if(choice==6) return false;
+        else if(choice==6){
+            if(programMode == NORMAL_MODE) programMode = ANALYZE_MODE;
+            else programMode = NORMAL_MODE;
+        }
+        else if(choice==7) return false;
         
         return true;
     }
