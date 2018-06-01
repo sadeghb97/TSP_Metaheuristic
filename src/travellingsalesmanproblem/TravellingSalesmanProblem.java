@@ -1,5 +1,7 @@
 package travellingsalesmanproblem;
 
+import org.fusesource.jansi.AnsiConsole;
+
 public class TravellingSalesmanProblem {
     private static String[] cities;
     private static int[][] distances;
@@ -9,7 +11,6 @@ public class TravellingSalesmanProblem {
     private static int programMode = NORMAL_MODE;
     
     public static void main(String[] args) {
-        System.out.println(System.getProperty("os.name"));
         cities = ProblemDatas.getCitiesArray();
         distances = ProblemDatas.getDistancesArray();
         while(menu());
