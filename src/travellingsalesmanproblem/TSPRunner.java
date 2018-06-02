@@ -6,7 +6,7 @@ import static travellingsalesmanproblem.TravellingSalesmanProblem.howManyRunNumb
 import static travellingsalesmanproblem.TravellingSalesmanProblem.printRuntime;
 import static travellingsalesmanproblem.TravellingSalesmanProblem.wantLogs;
 
-public class TSPRunnable {
+public class TSPRunner {
     public static final int DYNAMIC_PROGRAMMING = 1;
     public static final int HILL_CLIMBING = 2;
     public static final int SIMULATED_ANNEALING = 3;
@@ -25,7 +25,7 @@ public class TSPRunnable {
     private int selectionMode;
     private int crossoverMode;
 
-    public TSPRunnable(int algorithm, String[] cities, int[][] distances) {
+    public TSPRunner(int algorithm, String[] cities, int[][] distances) {
         this.algorithm = algorithm;
         this.cities = cities;
         this.distances = distances;
@@ -92,11 +92,28 @@ public class TSPRunnable {
             
             long avgDistance = sumDistances/runNumbers;
             long avgRuntime = sumRunTime/runNumbers;
-            System.out.print("\nAvg Distance: ");
-            StylishPrinter.print(String.valueOf(avgDistance), StylishPrinter.ANSI_BOLD_CYAN);
+            
+            String algName;
+            if(algorithm == DYNAMIC_PROGRAMMING) algName = "Dynamic Programming";
+            else if(algorithm == HILL_CLIMBING) algName = "Hill Climbing";
+            else if(algorithm == SIMULATED_ANNEALING) algName = "Simulated Annealing";
+            else algName = "Genetic";
+            
+            String list;
+            if(ProblemDatas.getListId() == ProblemDatas.TINY_CITIES_LIST) list = "Tiny List";
+            else if(ProblemDatas.getListId() == ProblemDatas.SMALL_CITIES_LIST) list = "Small List";
+            else list = "Full List";
+            
+            System.out.print("\nAvg Results With ");
+            StylishPrinter.print(algName, StylishPrinter.BOLD_RED);
+            System.out.print(" Solution For ");
+            StylishPrinter.print(list, StylishPrinter.BOLD_RED);
+            System.out.println(": ");
+            
+            StylishPrinter.print(String.valueOf(avgDistance), StylishPrinter.BOLD_CYAN);
             SbproPrinter.printDelimiter("||");
             System.out.print("Avg Runtime: ");
-            printRuntime(avgRuntime, StylishPrinter.ANSI_BOLD_CYAN, "");
+            printRuntime(avgRuntime, StylishPrinter.BOLD_CYAN, "");
         }        
     }
 }

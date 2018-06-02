@@ -9,6 +9,7 @@ public class TravellingSalesmanProblem {
     private static int programMode = NORMAL_MODE;
     
     public static void main(String[] args) {
+        System.out.println(System.getProperty("os.name"));
         cities = ProblemDatas.getCitiesArray();
         distances = ProblemDatas.getDistancesArray();
         while(menu());
@@ -17,24 +18,24 @@ public class TravellingSalesmanProblem {
     public static int getProgramMode(){return programMode;}
     
     public static void dynamicSolve(){
-        StylishPrinter.println("\nDynamic Programming Solving:", StylishPrinter.ANSI_BOLD_RED);
+        StylishPrinter.println("\nDynamic Programming Solving:", StylishPrinter.BOLD_RED);
         boolean printLogs;
         if(programMode == NORMAL_MODE) printLogs = wantLogs(false);
         else printLogs = false;
         
-        TSPRunnable tspRunnable = new TSPRunnable(TSPRunnable.DYNAMIC_PROGRAMMING, cities, distances);
+        TSPRunner tspRunnable = new TSPRunner(TSPRunner.DYNAMIC_PROGRAMMING, cities, distances);
         tspRunnable.setPrintLogs(printLogs);
         tspRunnable.run();
     }
     
     public static void hillClimbingSolve(){
-        StylishPrinter.println("\nHill Climbing Solving:", StylishPrinter.ANSI_BOLD_RED);
-        TSPRunnable tspRunnable = new TSPRunnable(TSPRunnable.HILL_CLIMBING, cities, distances);
+        StylishPrinter.println("\nHill Climbing Solving:", StylishPrinter.BOLD_RED);
+        TSPRunner tspRunnable = new TSPRunner(TSPRunner.HILL_CLIMBING, cities, distances);
         tspRunnable.run();
     }
     
     public static void simAnnealingSolve(){
-        StylishPrinter.println("\nSimulated Annealing Solving:", StylishPrinter.ANSI_BOLD_RED);
+        StylishPrinter.println("\nSimulated Annealing Solving:", StylishPrinter.BOLD_RED);
         int sugMaxIterations, maxIterations;
         double sugCoolingRate, coolingRate;
         
@@ -76,14 +77,14 @@ public class TravellingSalesmanProblem {
         }
         System.out.println();
         
-        TSPRunnable tspRunnable = new TSPRunnable(TSPRunnable.SIMULATED_ANNEALING, cities, distances);
+        TSPRunner tspRunnable = new TSPRunner(TSPRunner.SIMULATED_ANNEALING, cities, distances);
         tspRunnable.setMaxIteration(maxIterations);
         tspRunnable.setCoolingRate(coolingRate);
         tspRunnable.run();
     }
     
     public static void geneticSolve(){
-        StylishPrinter.println("\nGenetic Solving:", StylishPrinter.ANSI_BOLD_RED);
+        StylishPrinter.println("\nGenetic Solving:", StylishPrinter.BOLD_RED);
         int sugMaxGenerations, maxGenerations, sugPopulations, populations;
         double sugMutationProb, mutationProb;
         int crossoverMode, selectionMode;
@@ -160,7 +161,7 @@ public class TravellingSalesmanProblem {
         if(programMode == NORMAL_MODE) printLogs = wantLogs(false);
         else printLogs=false;
         
-        TSPRunnable tspRunnable = new TSPRunnable(TSPRunnable.GENETIC, cities, distances);
+        TSPRunner tspRunnable = new TSPRunner(TSPRunner.GENETIC, cities, distances);
         tspRunnable.setMaxGenerations(maxGenerations);
         tspRunnable.setPopulations(populations);
         tspRunnable.setMutationProb(mutationProb);
@@ -171,7 +172,7 @@ public class TravellingSalesmanProblem {
     }
     
     public static void changeCitiesList(){
-        StylishPrinter.println("\nChange Cities List:", StylishPrinter.ANSI_BOLD_RED);
+        StylishPrinter.println("\nChange Cities List:", StylishPrinter.BOLD_RED);
         boolean firstShow=true;
         
         while(true){
@@ -180,15 +181,15 @@ public class TravellingSalesmanProblem {
             
             System.out.println("Cities List: ");
             if(ProblemDatas.getListId() == ProblemDatas.TINY_CITIES_LIST)
-                StylishPrinter.println("1: Tiny Lists (Include 5 Cities)", StylishPrinter.ANSI_BOLD_GREEN);
+                StylishPrinter.println("1: Tiny Lists (Include 5 Cities)", StylishPrinter.BOLD_GREEN);
             else System.out.println("1: Tiny Lists (Include 5 Cities)");
 
             if(ProblemDatas.getListId() == ProblemDatas.SMALL_CITIES_LIST)
-                StylishPrinter.println("2: Small Lists (Include 10 Cities)", StylishPrinter.ANSI_BOLD_GREEN);
+                StylishPrinter.println("2: Small Lists (Include 10 Cities)", StylishPrinter.BOLD_GREEN);
             else System.out.println("2: Small Lists (Include 10 Cities)");
 
             if(ProblemDatas.getListId() == ProblemDatas.FULL_CITIES_LIST)
-                StylishPrinter.println("3: Full Lists (Include 59 Cities)", StylishPrinter.ANSI_BOLD_GREEN);
+                StylishPrinter.println("3: Full Lists (Include 59 Cities)", StylishPrinter.BOLD_GREEN);
             else System.out.println("3: Full Lists (Include 59 Cities)");
 
             System.out.println("4: Back to main menu");
@@ -238,7 +239,6 @@ public class TravellingSalesmanProblem {
         if(choose==1) return 100;
         
         System.out.println("\nEnter Desired Value: ");
-        System.out.println();
         return SbproScanner.inputInt(1, 10000);
     }
     
@@ -260,11 +260,11 @@ public class TravellingSalesmanProblem {
     }
     
     public static void printRuntime(long runtime){
-        printRuntime(runtime, StylishPrinter.ANSI_BOLD_YELLOW, StylishPrinter.ANSI_CYAN_BACKGROUND);
+        printRuntime(runtime, StylishPrinter.BOLD_YELLOW, StylishPrinter.BG_CYAN);
     }
     
     public static boolean menu(){
-        StylishPrinter.println("\nMenu:", StylishPrinter.ANSI_BOLD_RED);
+        StylishPrinter.println("\nMenu:", StylishPrinter.BOLD_RED);
         System.out.println("1: Dynamic Programming Solve");
         System.out.println("2: Hill Climbing Solve");
         System.out.println("3: Simulated Annealing Solve");

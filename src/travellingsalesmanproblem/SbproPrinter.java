@@ -8,7 +8,7 @@ public class SbproPrinter {
     
     public static void printDelimiter(String delStr){
         System.out.print(" ");
-        StylishPrinter.print(delStr, StylishPrinter.ANSI_BOLD_YELLOW, StylishPrinter.ANSI_CYAN_BACKGROUND);
+        StylishPrinter.print(delStr, StylishPrinter.BOLD_YELLOW, StylishPrinter.BG_CYAN);
         System.out.print(" ");        
     }
     
